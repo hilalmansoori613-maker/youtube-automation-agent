@@ -1,0 +1,45 @@
+name: YouTube Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Video topic"
+        required: true
+        default: "भारत के 10 रोचक तथ्य"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install packages
+        run: |
+          pip install -r requirements.txt
+
+      - name: Create video
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          TTS_VOICE: hi-IN-MadhurNeural
+        run: |
+          python app.py --topic "${{ github.event.inputs.topic }}" --make-video
+
+      - name: Save video
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-video
+          path: output/
